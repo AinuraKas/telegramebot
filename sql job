@@ -1,0 +1,44 @@
+DECLARE @result INT = 0,
+        @cmd sysname;
+--There table in link server where we insert logs AINURA_OPOVESHENIYA( text_o, date_o, state_o)
+DECLARE @f sysname;
+UPDATE OPENQUERY
+       (LINKS, 'SELECT State_o FROM AINURA_OPOVESHENIYA')
+SET State_o = 1;
+SELECT *
+INTO #a
+FROM OPENQUERY
+     (LINKS, 'SELECT * FROM AINURA_OPOVESHENIYA where State_o = 1');
+IF EXISTS (SELECT * FROM #a)
+BEGIN
+    DECLARE vendor_cursor CURSOR FOR
+    SELECT TEXT_O + ' Время:' + CONVERT(NVARCHAR(50), date_o, 13)
+    FROM #a a;
+
+
+
+    OPEN vendor_cursor;
+
+    FETCH NEXT FROM vendor_cursor
+    INTO @f;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @cmd = 'D:\hur\bot.cmd "' + @f + '"';
+        PRINT @cmd;
+        EXEC @result = xp_cmdshell @cmd;
+        IF (@result != 0)
+            BREAK;
+        FETCH NEXT FROM vendor_cursor
+        INTO @f;
+
+    END;
+
+
+    CLOSE vendor_cursor;
+    DEALLOCATE vendor_cursor;
+
+    IF (@result = 0)
+        DELETE OPENQUERY
+               (LINKS, 'SELECT * FROM AINURA_OPOVESHENIYA where State_o = 1');
+END;

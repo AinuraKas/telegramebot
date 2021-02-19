@@ -1,0 +1,12 @@
+option batch abort
+option confirm off
+
+
+open sftp://akasymalieva:Passw@172.28.141.241 -hostkey="ssh-ed25519 255 hostkey"
+
+call export {http,https,ftp,all}_proxy=172.28.142.230:3128
+
+call python3 codes/tel/telega.py "%1%"
+
+close
+exit
